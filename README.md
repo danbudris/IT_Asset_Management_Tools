@@ -19,6 +19,17 @@ This project was originally concieved as an intermediate step to create collect 
 
 CICU is primarily written in Powershell, some C#, and with use of Windows Forms and some Visual Basic.
 
+HOW IT WORKS
+-----------
+A powershell logon script is distributed with group policy.
+
+Each computer that runs the logon script will run several WMI queries (comp name, mobo, drives, processer, antivirus, BIOS) and save them in a CSV in the directory specified (in the logon script).
+
+Then the GUI runs (ITAM_GUI) it collects all of the information from the CSV files saved in the directory, allowing you to view the information for individual comptuers as needed.
+
+Additionally, this tool allows you to run Active Directory quieres against the comptuers, returning detailed active directory information without using powershell get-ad statements or filters. 
+
+
 WHAT YOU NEED
 -------------
 This tool is designed to be used in a Windows Active Directory domain (funcationality at least 2008) with at least powershell V 3.0.  
@@ -26,7 +37,7 @@ This tool is designed to be used in a Windows Active Directory domain (funcation
 
 CONFIGURATION
 -------------
-Configure a Group Policy object to run the supplied startup script (InfoSollectorStartupScript.ps1) on the machines you wish to report on. (Located in Policies > Windows Settings > Scripts)
+Configure a Group Policy object to run the supplied startup script (InfoCollectorStartupScript.ps1) on the machines you wish to report on. (Located in Policies > Windows Settings > Scripts)
 
 When a computer starts, it will run the script, which reports the data back to a central location.  
 
@@ -48,7 +59,6 @@ Did you leave enough time for all the comptuers in the environment to report bac
 Startup Script is not running:
 Double check your GPO.  This is outside the scope of this readme.
 Check the Script Execution Policy in your domain; if your script execution policy requires it (allsigned, remotesigned, etc) please digitally sign your script.
-
 
 
 BUGS
