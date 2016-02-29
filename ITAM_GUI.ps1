@@ -21,6 +21,7 @@
 
 ##DEFINE FUNCTIONS
 
+##Sets the location of the self-reported computer configuration information; this should be a full path name using the FQDN
 function SetDataPath {
 
 [System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic') | Out-Null
@@ -33,11 +34,13 @@ $datapath | Export-Clixml -Path $PSScriptRoot\pathinfo.clixml
 
 }
 
+##Sets the domain controller which will be quiered when any active directory queries are made through the GUI
 function SetDomainController{
 [System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic') | Out-Null
 $domaincontroller = [Microsoft.VisualBasic.Interaction]::InputBox("Enter the name of the domain controller which will provide AD information","Set DC") 
 $domaincontroller | Export-Clixml -Path $PSScriptRoot\dcinfo.clixml }
 
+##Sets the location for reports to be saved
 function SetReportPath {
 
 [System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic') | Out-Null
@@ -46,6 +49,7 @@ $reportpath | Export-Clixml -Path $PSScriptRoot\reportpath.clixml
 
 }
 
+##Gets the names of the computer report files that were returned by the logonscript distributed with the GPO
 function Get-Compnames {
 $filenames                = (Get-ChildItem $datapath\*.csv | Select-Object -Property Name -ExpandProperty Name)
 foreach ($file in $filenames){
@@ -55,16 +59,19 @@ foreach ($file in $filenames){
 }#end foreach
 }
 
+##Shoes tool strip menu
 function OnClick_openToolStripMenuItem($Sender,$AboutMessage){
         [void][System.Windows.Forms.MessageBox]::Show("Version 1.10, Developed by Dan Budris, 2015")
     }
 
+##Shows datapath
 function OnClick_ShowDataPath{
 $reportpath = Import-Clixml -Path $PSScriptRoot\reportpath.clixml
 $datapath = Import-Clixml -Path $PSScriptRoot\pathinfo.clixml
 [void][System.Windows.Forms.MessageBox]::Show("Datapath:`n $datapath `n Reportpath: `n $reportpath")
 }
 
+#Shows active DC
 function OnClick_ShowDC{
 $domaincontroller = Import-Clixml -Path $PSScriptRoot\dcinfo.clixml
 [void][System.Windows.Forms.MessageBox]::Show("$domaincontroller")
@@ -126,7 +133,7 @@ function OnClick_ADOptions{
     }
 
 
-#CREATE FORMS
+#INSTANTIATE FORMS
 #MAIN FORM, LIST BOX
 $objForm        = New-Object System.Windows.Forms.Form 
 $objLabel       = New-Object System.Windows.Forms.Label
