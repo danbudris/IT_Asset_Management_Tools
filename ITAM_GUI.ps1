@@ -168,6 +168,7 @@ $DatapathAbout  = New-Object System.Windows.Forms.ToolStripMenuItem
 $datamenu       = New-Object System.Windows.Forms.ToolStripMenuItem
 $DCAbout        = New-Object System.Windows.Forms.ToolStripMenuItem
 $UpdateDCMenu   = New-Object System.Windows.Forms.ToolStripMenuItem
+$CustomReport   = New-Object System.Windows.Forms.ToolStripMenuItem
 $UpdateReportPath = New-Object System.Windows.Forms.ToolStripMenuItem
 
 ##LOCATION SPACERS
@@ -255,7 +256,7 @@ $ResultButton.Add_Click(
 {
 $value                    = $objListBox.SelectedItem 
 
-$valueexpanded            = Import-Csv -path $datapath$value   
+$valueexpanded            = Import-Csv -path $datapath"\"$value   
 
 $objName.Text             = $valueexpanded.Name
 $objMobo.Text             = $valueexpanded.Motherboard
@@ -405,6 +406,14 @@ Get-Compnames
 
 }) 
 
+##CUSTOM REPORT SUBMENU
+$CustomReport.name = "CustomReportMenu"
+$CustomReport.size = New-Object System.Drawing.Size(152,22)
+$CustomReport.Text = "&Custom AD Stats report"
+$CustomReport.ShortcutKeys = "Control, C, R"
+$CustomReport.ShowShortCutKeys = "true"
+$CustomReport.add_click({CustomReport})
+
 #ADD FORMS TO MAIN FORM
 #ADD TO MAIN FORM
 $objForm.Controls.Add($objName)
@@ -418,7 +427,7 @@ $objForm.Controls.Add($objBios)
 ##MENUS AND DROPDOWNS
 $objForm.Controls.Add($objMenu)
 $objMenu.Items.AddRange(@($objMenuOption, $objMenuAbout))
-$objMenuOption.DropDownItems.AddRange(@($PingOption, $ADinfo, $Refresh, $Report, $datamenu, $updateDCMenu, $UpdateReportPath))
+$objMenuOption.DropDownItems.AddRange(@($PingOption, $ADinfo, $Refresh, $Report, $datamenu, $updateDCMenu, $UpdateReportPath, $CustomReport))
 $objMenuAbout.DropDownItems.AddRange(@($AboutOption, $DatapathAbout, $DCAbout))
 
 ##STATUS STRIP
@@ -437,3 +446,106 @@ $objForm.ShowDialog()
 $objForm.BringToFront()
 $objForm.Activate()
 $objform.Dispose()
+
+
+
+
+
+function CustomReport{
+
+ Function ftnChecked 
+{
+
+     $CheckedItems = @()
+
+     foreach ($category in $CheckedListBox.CheckedItems) 
+     {
+
+         switch ($category.ToString())
+         {   
+        "Manager"{$CheckedItems += "ManagedBy"}
+        "Group Membership"{$CheckedItems += "MemberOf"}
+        "Distinguished Name"{$CheckedItems += "DistinguishedName"}
+        "DNS Host Name"{$CheckedItems += "DNSHostName"}
+        "IPV4 Address"{$CheckedItems += "IPV4Address" }
+        "Is Enabled?"{$CheckedItems += "Enabled"}
+        "Last Logondate"{$CheckedItems += "LastLogonDate"}
+        "Modified"{$CheckedItems += "whenChanged"}
+        "Created"{$CheckedItems += "WhenCreated"}
+        "Operating System"{$CheckedItems += "OperatingSystem"}
+        "Primary Group"{$CheckedItems += "PrimaryGroup"}
+        "SID"{$CheckedItems += "SID"}
+        "GUID"{$CheckedItems += "objectGUID"}
+        }
+    }
+
+   
+if ($CheckedItems){
+         
+    $statusLabel.Text = "Fetching AD info from $domaincontroller...this can take a minute"
+    $compname = $objname.text
+    $adinfostring = Invoke-Command -ComputerName $domaincontroller -ScriptBlock {
+    $InsideCompname = $USING:compname
+    get-adcomputer -properties $args[1] -Filter {name -like $InsideCompname} | select-object -ExpandProperty $args[1]
+    } -ArgumentList $compname,$CheckedItems | out-string
+    
+    [void][System.Windows.Forms.MessageBox]::Show("$adinfostring")
+    $statusLabel.Text = "Ready"
+        
+    }
+        else{
+        $adinfo = get-adcomputer -Filter {name -like $compname}
+        $adinfostring = $adinfo | out-string
+        [void][System.Windows.Forms.MessageBox]::Show($testing)
+        }
+     }
+   
+    #CreateForm
+    $ReportForm = New-Object -TypeName System.Windows.Forms.Form;
+    $ReportForm.Width = 345;
+    $ReportForm.Height = 389;
+    $ReportForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog;
+    $ReportForm.StartPosition = "CenterScreen";
+    $ReportForm.MaximizeBox = $false;
+    $ReportForm.Text = "Feature selection";
+
+    #CREATE REPORT BUTTON
+    $ReportButton = New-Object -TypeName System.Windows.Forms.Button;
+    $ReportButton.Text = "Report";
+    $ReportButton.Top = $CheckedListBox.Top + $CheckedListBox.Height + 2;
+    $ReportButton.Left = ($FeatureForm.Width / 2) - ($OKButton.Width / 2);
+    $ReportButton.add_Click({ftnChecked});
+    #Add button
+    $ReportForm.Controls.Add($ReportButton);
+
+     # Create a CheckedListBox
+    $CheckedListBox = New-Object -TypeName System.Windows.Forms.CheckedListBox;
+    $CheckedListBox.Width = 325;
+    $CheckedListBox.Height = 325;
+    $CheckedListBox.Left = 5;
+    $CheckedListBox.Top = 5;
+    $CheckedListBox.CheckOnClick = $true
+    $CheckedListBox.Add_ItemCheck({})
+    $ReportForm.Controls.Add($CheckedListBox);
+
+           #Add checkbox items
+    $CheckedListBox.Items.Add("Manager") | Out-Null;
+    $CheckedListBox.Items.Add("Group Membership") | Out-Null;
+    $CheckedListBox.Items.Add("Distinguished Name") | Out-Null;
+    $CheckedListBox.Items.Add("DNS Host Name") | Out-Null;
+    $CheckedListBox.Items.Add("IPV4 Address") | Out-Null;
+    $CheckedListBox.Items.Add("Is Enabled?") | Out-Null;
+    $CheckedListBox.Items.Add("Last Logondate") | Out-Null;
+    $CheckedListBox.Items.Add("Modified") | Out-Null;
+    $CheckedListBox.Items.Add("Created") | Out-Null;
+    $CheckedListBox.Items.Add("Operating System") | Out-Null;
+    $CheckedListBox.Items.Add("Primary Group") | Out-Null;
+    $CheckedListBox.Items.Add("SID") | Out-Null;
+    $CheckedListBox.Items.Add("GUID") | Out-Null
+
+    # Show the form
+    $ReportForm.ShowDialog();
+
+    
+
+}
